@@ -1,103 +1,120 @@
-import Image from "next/image";
+'use client';
+
+import { useState } from 'react';
+
+type PageType = 'complaint' | 'treatment';
+
+interface ApiOk {
+  ok: true;
+  content: string;
+}
+interface ApiErr {
+  ok: false;
+  error: string;
+}
+type ApiResponse = ApiOk | ApiErr;
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [topic, setTopic] = useState<string>('tenniselleboog');
+  const [pageType, setPageType] = useState<PageType>('complaint');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [out, setOut] = useState<string>('');
+  const [err, setErr] = useState<string>('');
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+  async function generate() {
+    setLoading(true);
+    setErr('');
+    setOut('');
+
+    try {
+      const res = await fetch('/api/generate-seo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic, pageType }),
+        cache: 'no-store',
+      });
+
+      const data: unknown = await res.json();
+
+      // Foutafhandeling op basis van ons API-schema
+      if (!res.ok) {
+        const msg =
+          typeof data === 'object' &&
+          data !== null &&
+          'error' in data &&
+          typeof (data as ApiErr).error === 'string'
+            ? (data as ApiErr).error
+            : `HTTP ${res.status}`;
+        throw new Error(msg);
+      }
+
+      const okData =
+        typeof data === 'object' &&
+        data !== null &&
+        'ok' in data &&
+        (data as ApiOk).ok === true &&
+        'content' in data &&
+        typeof (data as ApiOk).content === 'string'
+          ? (data as ApiOk)
+          : null;
+
+      if (!okData) throw new Error('Onverwacht API‑antwoord');
+
+      setOut(okData.content || '(geen content)');
+    } catch (e: unknown) {
+      const message =
+        e instanceof Error ? e.message : typeof e === 'string' ? e : 'Onbekende fout';
+      setErr(message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <main style={{ maxWidth: 800, margin: '40px auto', padding: 16, fontFamily: 'system-ui' }}>
+      <h1>SEO Generator (test)</h1>
+
+      <label style={{ display: 'block', marginTop: 12 }}>
+        Onderwerp (topic)
+        <input
+          value={topic}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTopic(e.target.value)}
+          style={{ width: '100%', padding: 8, marginTop: 6 }}
+          placeholder="bijv. tenniselleboog"
+        />
+      </label>
+
+      <label style={{ display: 'block', marginTop: 12 }}>
+        Pagina type
+        <select
+          value={pageType}
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+            setPageType(e.target.value as PageType)
+          }
+          style={{ width: '100%', padding: 8, marginTop: 6 }}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+          <option value="complaint">Klachtenpagina</option>
+          <option value="treatment">Behandelpagina</option>
+        </select>
+      </label>
+
+      <button
+        onClick={generate}
+        disabled={loading}
+        style={{ marginTop: 14, padding: '10px 14px', cursor: 'pointer' }}
+        aria-busy={loading}
+      >
+        {loading ? 'Bezig…' : 'Genereer tekst'}
+      </button>
+
+      {err && <p style={{ color: 'crimson', marginTop: 14 }}>Fout: {err}</p>}
+
+      {out && (
+        <section style={{ marginTop: 20, whiteSpace: 'pre-wrap' }}>
+          <h2>Resultaat</h2>
+          <div>{out}</div>
+        </section>
+      )}
+    </main>
   );
 }
