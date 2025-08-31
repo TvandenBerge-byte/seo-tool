@@ -2,7 +2,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@geist-ui/core';
 
 type PageType = 'complaint' | 'treatment';
 type FaqItem = { q: string; a: string };
@@ -215,13 +214,13 @@ export default function Home() {
       </label>
 
       <div style={{ marginTop: 16 }}>
-        <Button
-          type="success"
-          loading={loading}
-          onClick={generate}
-        >
-          {loading ? 'Bezig…' : 'Genereer content'}
-        </Button>
+    <button
+  style={{ marginTop: 16, padding: '8px 12px', borderRadius: 8 }}
+  disabled={loading}
+  onClick={generate}
+>
+  {loading ? 'Bezig...' : 'Genereer content'}
+</button>
       </div>
 
       {err && <p style={{ color: 'crimson', marginTop: 14 }}>Fout: {err}</p>}
