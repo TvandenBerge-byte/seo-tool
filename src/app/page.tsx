@@ -217,7 +217,6 @@ export default function Home() {
       <div style={{ marginTop: 16 }}>
         <Button
           type="success"
-          auto
           loading={loading}
           onClick={generate}
         >
