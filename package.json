@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@geist-ui/core": "^2.3.8",
     "next": "15.4.6",
     "openai": "^5.12.2",
     "react": "19.1.0",
