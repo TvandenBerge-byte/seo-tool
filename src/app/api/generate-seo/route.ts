@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 // src/app/api/generate-seo/route.ts
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
