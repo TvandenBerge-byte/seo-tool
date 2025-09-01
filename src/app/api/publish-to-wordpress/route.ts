@@ -21,14 +21,14 @@ const json = (d: unknown, status = 200) =>
 const isAllowed = (req: NextRequest) =>
   (req.headers.get("authorization") ?? "") === `Bearer ${INTERNAL_API_SECRET}`;
 
-// ✅ FIX: cookies() kan (in jouw Next-versie) een Promise zijn → altijd 'await' gebruiken
+// ✅ FIXED: cookies() is async & readonly -> await + no-op set/remove
 async function getSessionUserIdFromCookies(): Promise<string | null> {
   const store = await cookies();
   const supa = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     cookies: {
-      get: (n) => store.get(n)?.value,
-      set: (n, v, o) => store.set({ name: n, value: v, ...o }),
-      remove: (n, o) => store.set({ name: n, value: "", ...o }),
+      get: (name: string) => store.get(name)?.value, // alleen lezen
+      set: () => {},    // no-op: we muteren de cookie hier niet
+      remove: () => {}, // no-op
     },
   });
   const { data } = await supa.auth.getUser();
