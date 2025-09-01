@@ -21,8 +21,9 @@ const json = (d: unknown, status = 200) =>
 const isAllowed = (req: NextRequest) =>
   (req.headers.get("authorization") ?? "") === `Bearer ${INTERNAL_API_SECRET}`;
 
+// ✅ FIX: cookies() kan (in jouw Next-versie) een Promise zijn → altijd 'await' gebruiken
 async function getSessionUserIdFromCookies(): Promise<string | null> {
-  const store = cookies();
+  const store = await cookies();
   const supa = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     cookies: {
       get: (n) => store.get(n)?.value,
@@ -50,7 +51,7 @@ type PublishPayload = {
     meta_description?: string;
     focus_keyword?: string;
   };
-  schema_payload?: any; // we accepteren string | object | any[]
+  schema_payload?: any; // string | object | any[]
   status?: "publish" | "draft" | "pending";
 };
 
@@ -129,15 +130,12 @@ function safeSlug(input: string) {
 }
 const normStr = (v?: string) => (v ?? "").toString().trim();
 
-/** Neemt string | object | array en geeft altijd een geldige array met JSON-LD objecten terug.
- *  Ongeldige entries worden overgeslagen i.p.v. de hele publicatie te laten falen. */
 function normalizeSchemaPayload(input: any): { array: any[]; dropped: any[] } {
   let arr: any[] = [];
   if (!input) return { array: [], dropped: [] };
 
   try {
     if (typeof input === "string") {
-      // probeer JSON te parsen; het mag 1 object óf een array bevatten
       const parsed = JSON.parse(input);
       if (Array.isArray(parsed)) arr = parsed;
       else if (parsed && typeof parsed === "object") arr = [parsed];
@@ -153,7 +151,6 @@ function normalizeSchemaPayload(input: any): { array: any[]; dropped: any[] } {
     return { array: [], dropped: [input] };
   }
 
-  // filter op “object met @type/@context” (minimale check)
   const valid: any[] = [];
   const dropped: any[] = [];
   for (const item of arr) {
@@ -186,7 +183,6 @@ async function wpCreatePost(
 
   const auth = Buffer.from(`${site.wp_user}:${site.wp_app_password}`).toString("base64");
 
-  // “expected pattern” voorkomen
   const title = normStr(post.title) || "Untitled";
   const status = (normStr(post.status).toLowerCase() || "publish") as "publish" | "draft" | "pending";
   const content = normStr(post.content);
